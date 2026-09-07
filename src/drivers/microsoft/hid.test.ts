@@ -24,7 +24,8 @@ function fakeMicrosoft(productId: number, options: { mockDpi: number; mockColor?
       if (!options.isPro && id === REPORT_ID_WRITE && data[1] === 0x01) {
         // Mock responding to a read request with an inputreport
         const property = data[0];
-        const reply = new Uint8Array(32);
+        const replyLength = 32;
+        const reply = new Uint8Array(replyLength);
         reply[0] = property;
         reply[1] = 0x00;
         reply[2] = 0x03; // length
@@ -41,13 +42,12 @@ function fakeMicrosoft(productId: number, options: { mockDpi: number; mockColor?
       }
     },
     receiveFeatureReport: async (id: number) => {
-      if (!options.isPro) {
-        throw new Error("Failed to receive the feature report.");
-      }
+      if (!options.isPro) throw new Error("Classic uses inputreport");
       const request = sent[sent.length - 1];
       if (!request) throw new Error("No request sent");
       const property = request.data[0];
-      const reply = new Uint8Array(73);
+      const replyLength = 73;
+      const reply = new Uint8Array(replyLength);
       reply[0] = id;
       reply[1] = property;
       reply[2] = 0x00;
@@ -82,10 +82,10 @@ function fakeMicrosoft(productId: number, options: { mockDpi: number; mockColor?
 }
 
 test("isSupported accepts only known Microsoft products", () => {
-  const supportedPro = { vendorId: 0x045E, productId: 0x082a } as HIDDevice;
-  const supportedClassic = { vendorId: 0x045E, productId: 0x0823 } as HIDDevice;
-  const unsupported = { vendorId: 0x045E, productId: 0x1234 } as HIDDevice;
-  const otherVendor = { vendorId: 0x1532, productId: 0x082a } as HIDDevice;
+  const supportedPro = { vendorId: VENDOR_ID.microsoft, productId: 0x082a, collections: [{usagePage: 0xFF07, usage: 0x0212}] } as HIDDevice;
+  const supportedClassic = { vendorId: VENDOR_ID.microsoft, productId: 0x0823, collections: [{usagePage: 0x0C, usage: 0x01}] } as HIDDevice;
+  const unsupported = { vendorId: VENDOR_ID.microsoft, productId: 0x0000, collections: [] } as HIDDevice;
+  const otherVendor = { vendorId: 0x1234, productId: 0x082a, collections: [{usagePage: 0xFF07, usage: 0x0212}] } as HIDDevice;
   
   assert.equal(MicrosoftHidClient.isSupported(supportedPro), true);
   assert.equal(MicrosoftHidClient.isSupported(supportedClassic), true);

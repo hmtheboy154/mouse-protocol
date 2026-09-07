@@ -476,9 +476,10 @@ export const CORSAIR_HID_FILTERS: HIDDeviceFilter[] = CORSAIR_PRODUCT_IDS.map((p
   usage: CORSAIR_CONFIG_USAGE,
 }));
 
-export const MICROSOFT_HID_FILTERS: HIDDeviceFilter[] = [...MICROSOFT_PRODUCTS].map(
-  (productId) => ({ vendorId: VENDOR_ID.microsoft, productId, usagePage: 0x0C, usage: 0x01 }),
-);
+export const MICROSOFT_HID_FILTERS: HIDDeviceFilter[] = [
+  { vendorId: VENDOR_ID.microsoft, productId: 0x0823, usagePage: 0x0C, usage: 0x01 }, // Classic
+  { vendorId: VENDOR_ID.microsoft, productId: 0x082A, usagePage: 0xFF07, usage: 0x0212 }, // Pro
+];
 
 /**
  * The Incott 8K wireless mouse (and its charging-state product id) answer the

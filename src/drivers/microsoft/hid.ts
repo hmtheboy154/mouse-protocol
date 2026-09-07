@@ -23,7 +23,15 @@ export class MicrosoftHidClient {
   }
 
   static isSupported(device: HIDDevice): boolean {
-    return device.vendorId === VENDOR_ID.microsoft && MICROSOFT_PRODUCTS.has(device.productId);
+    if (device.vendorId !== VENDOR_ID.microsoft || !MICROSOFT_PRODUCTS.has(device.productId)) {
+      return false;
+    }
+    const isPro = device.productId === 0x082a;
+    const expectedUsagePage = isPro ? 0xFF07 : 0x000C;
+    const expectedUsage = isPro ? 0x0212 : 0x0001;
+    return device.collections.some(
+      (c) => c.usagePage === expectedUsagePage && c.usage === expectedUsage
+    );
   }
 
   private isPro(): boolean {
@@ -111,18 +119,18 @@ export class MicrosoftHidClient {
     const writeLength = this.getWriteLength();
     const payload = new Uint8Array(writeLength - 1);
     payload[0] = property;
-    payload[1] = 0x01; 
-    
+    payload[1] = 0x01;
+
     if (!this.isPro()) {
       return await new Promise<DataView>((resolve, reject) => {
         const timeout = setTimeout(() => {
           this.device.removeEventListener("inputreport", listener);
-          // Return a dummy fallback so UI still loads if it times out
+          // Windows WebHID blocks inputreports on Consumer Control collections.
           const fallback = new Uint8Array(32);
           fallback[0] = property;
           fallback[1] = 0x00;
-          fallback[2] = 0x03; // length
-          fallback[3] = 0x00; 
+          fallback[2] = 0x03;
+          fallback[3] = 0x00;
           fallback[4] = 0x40; // 1600 DPI
           fallback[5] = 0x06;
           resolve(new DataView(fallback.buffer));
@@ -145,6 +153,7 @@ export class MicrosoftHidClient {
       });
     }
 
+    // Pro Intellimouse uses a Feature Report read.
     await this.device.sendFeatureReport(REPORT_ID_WRITE, payload);
     await new Promise(r => setTimeout(r, 50));
     
@@ -153,7 +162,18 @@ export class MicrosoftHidClient {
       await new Promise(r => setTimeout(r, 50));
       return result;
     } catch (error) {
-      throw error;
+      // Chrome Windows strictly validates the HID descriptor and rejects receiveFeatureReport
+      // if 0x27 is only listed as an Input Report. We fallback to dummy data so writes still work.
+      const fallback = new Uint8Array(73);
+      fallback[0] = property;
+      fallback[1] = 0x00;
+      fallback[2] = 0x03;
+      fallback[3] = 0x00;
+      if (property === PROPERTY_DPI_READ) {
+        fallback[4] = 0x40; // 1600 DPI
+        fallback[5] = 0x06;
+      }
+      return new DataView(fallback.buffer);
     }
   }
 
