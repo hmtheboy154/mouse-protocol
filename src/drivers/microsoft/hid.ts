@@ -43,6 +43,9 @@ export class MicrosoftHidClient {
   }
 
   async open(): Promise<void> {
+    if (!MICROSOFT_PRODUCTS.has(this.device.productId)) {
+      throw new Error(`Unsupported Microsoft product ID: 0x${this.device.productId.toString(16)}`);
+    }
     if (!this.device.opened) await this.device.open();
   }
 

@@ -59,4 +59,4 @@ Because these limitations stem from unchangeable device firmware and strict OS/B
 
 To ensure a seamless user experience:
 1. **Safe Fallbacks:** The OpenMouse WebHID driver catches these Windows-specific read failures (either via timeouts for the Classic or caught exceptions for the Pro) and supplies default "dummy" data. This ensures the UI successfully loads and allows the user to continue writing/configuring their mouse.
-2. **OpenMouse Bridge:** For full read support on Windows, users can install the OpenMouse Bridge companion app. The Bridge utilizes native `hidapi`, which entirely bypasses Chrome's strict descriptor validation and Consumer Control blocking, enabling perfect bidirectional communication.
+2. **OpenMouse Bridge:** While the companion app uses native `hidapi`, tests confirm that the Windows OS itself (via `HidD_GetFeature`) strictly rejects reading the `0x27` report with an "Incorrect Parameter" error because of the descriptor mismatch. Therefore, reading real data on Windows is fundamentally impossible without a custom kernel driver. The fallback approach is the only viable cross-platform solution.
