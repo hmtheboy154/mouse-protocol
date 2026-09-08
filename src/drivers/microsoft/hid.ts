@@ -161,7 +161,13 @@ export class MicrosoftHidClient {
     await new Promise(r => setTimeout(r, 50));
     
     try {
-      const result = await this.device.receiveFeatureReport(REPORT_ID_READ);
+      let result: DataView;
+      const device = this.device as any;
+      if (typeof device.receiveInputReport === "function") {
+        result = await device.receiveInputReport(REPORT_ID_READ);
+      } else {
+        result = await this.device.receiveFeatureReport(REPORT_ID_READ);
+      }
       await new Promise(r => setTimeout(r, 50));
       return result;
     } catch (error) {
