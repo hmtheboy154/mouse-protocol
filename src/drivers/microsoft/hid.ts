@@ -126,7 +126,7 @@ export class MicrosoftHidClient {
     const writeLength = this.getWriteLength();
     const payload = new Uint8Array(writeLength - 1);
     payload[0] = property;
-    payload[1] = 0x01;
+    payload[1] = 0x01; // read mode
 
     if (!this.isPro()) {
       return await new Promise<DataView>((resolve, reject) => {
@@ -136,13 +136,13 @@ export class MicrosoftHidClient {
           const fallback = new Uint8Array(32);
           fallback[0] = property;
           fallback[1] = 0x00;
-      fallback[2] = 0x02;
+          fallback[2] = 0x02;
           fallback[3] = 0x40; // 1600 DPI
           fallback[4] = 0x06;
           resolve(new DataView(fallback.buffer));
         }, 1000);
 
-        const listener = (event: HIDInputReportEvent) => {
+        const listener = (event: any) => {
           if (event.reportId === REPORT_ID_READ) {
             clearTimeout(timeout);
             this.device.removeEventListener("inputreport", listener);
@@ -161,31 +161,55 @@ export class MicrosoftHidClient {
 
     // Pro Intellimouse uses a Feature Report read.
     await this.device.sendFeatureReport(REPORT_ID_WRITE, payload);
-    await new Promise(r => setTimeout(r, 50));
+
+    const startTime = Date.now();
+    let delay = 50;
     
-    try {
-      let result: DataView;
-      const device = this.device as any;
-      if (typeof device.receiveInputReport === "function") {
-        result = await device.receiveInputReport(REPORT_ID_READ);
-      } else {
-        result = await this.device.receiveFeatureReport(REPORT_ID_READ);
+    while (Date.now() - startTime < 1000) {
+      await new Promise(r => setTimeout(r, delay));
+      delay = 10; // subsequent polls can be faster
+      
+      try {
+        let result: DataView;
+        const device = this.device as any;
+        if (typeof device.receiveInputReport === "function") {
+          result = await device.receiveInputReport(REPORT_ID_READ);
+        } else {
+          result = await this.device.receiveFeatureReport(REPORT_ID_READ);
+        }
+        
+        let offset = 0;
+        // On Linux WebHID, Chrome currently has a bug where receiveFeatureReport 
+        // includes the Report ID in the DataView buffer. We must detect and strip it.
+        if (result.byteLength > 0 && result.getUint8(0) === REPORT_ID_READ) {
+          offset = 1;
+        }
+
+        if (result.byteLength > offset && result.getUint8(offset) === property) {
+          // Found the correct report!
+          if (offset > 0) {
+            // Strip the report ID so the rest of the code works uniformly
+            return new DataView(result.buffer, result.byteOffset + offset, result.byteLength - offset);
+          }
+          return result;
+        }
+        
+        // Stale report (e.g. device is still processing), loop again.
+      } catch (error) {
+        // Chrome Windows strictly validates the HID descriptor and rejects receiveFeatureReport
+        // if 0x27 is only listed as an Input Report. We fallback to dummy data so writes still work.
+        const fallback = new Uint8Array(73);
+        fallback[0] = property;
+        fallback[1] = 0x00;
+        fallback[2] = 0x02;
+        if (property === PROPERTY_DPI_READ) {
+          fallback[3] = 0x40; // 1600 DPI
+          fallback[4] = 0x06;
+        }
+        return new DataView(fallback.buffer);
       }
-      await new Promise(r => setTimeout(r, 50));
-      return result;
-    } catch (error) {
-      // Chrome Windows strictly validates the HID descriptor and rejects receiveFeatureReport
-      // if 0x27 is only listed as an Input Report. We fallback to dummy data so writes still work.
-      const fallback = new Uint8Array(73);
-      fallback[0] = property;
-      fallback[1] = 0x00;
-      fallback[2] = 0x02;
-      if (property === PROPERTY_DPI_READ) {
-        fallback[3] = 0x40; // 1600 DPI
-        fallback[4] = 0x06;
-      }
-      return new DataView(fallback.buffer);
     }
+    throw new Error(`Timeout waiting for property ${property.toString(16)}`);
   }
 
   async readDpi(): Promise<number> {
