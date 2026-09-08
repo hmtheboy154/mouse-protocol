@@ -7,10 +7,10 @@ import { VENDOR_ID } from "../vendors.ts";
 const globals = globalThis as { window?: { setTimeout: typeof setTimeout } };
 globals.window ??= { setTimeout };
 
-function fakeMicrosoft(productId: number, options: { mockDpi: number; mockColor?: string; mockPolling?: number; mockLod?: number; isPro: boolean }) {
-  const sent: { reportId: number; data: Uint8Array }[] = [];
-  let listeners: Record<string, Function[]> = {};
-
+function fakeMicrosoft(productId: number, options: { isPro: boolean, mockDpi?: number, mockColor?: string, mockPolling?: number, mockLod?: number }) {
+  const sent: any[] = [];
+  const listeners: Record<string, Function[]> = {};
+  
   const device = {
     vendorId: VENDOR_ID.microsoft,
     productId,
@@ -22,17 +22,16 @@ function fakeMicrosoft(productId: number, options: { mockDpi: number; mockColor?
     sendFeatureReport: async (id: number, data: Uint8Array) => {
       sent.push({ reportId: id, data: new Uint8Array(data) });
       if (!options.isPro && id === REPORT_ID_WRITE && data[1] === 0x01) {
-        // Mock responding to a read request with an inputreport
         const property = data[0];
         const replyLength = 32;
         const reply = new Uint8Array(replyLength);
         reply[0] = property;
         reply[1] = 0x00;
-        reply[2] = 0x03; // length
-        reply[3] = 0x00; // padding
-        if (property === 0x97) { // DPI read
-          reply[4] = options.mockDpi & 0xff;
-          reply[5] = (options.mockDpi >> 8) & 0xff;
+        reply[2] = 0x03;
+        reply[3] = 0x00;
+        if (property === 0x97) {
+          reply[4] = (options.mockDpi || 0) & 0xff;
+          reply[5] = ((options.mockDpi || 0) >> 8) & 0xff;
         }
         
         setTimeout(() => {
@@ -48,22 +47,21 @@ function fakeMicrosoft(productId: number, options: { mockDpi: number; mockColor?
       const property = request.data[0];
       const replyLength = 73;
       const reply = new Uint8Array(replyLength);
-      reply[0] = id;
-      reply[1] = property;
-      reply[2] = 0x00;
-      reply[3] = 0x02; // length
-      if (property === 0x97) { // DPI
-        reply[4] = options.mockDpi & 0xff;
-        reply[5] = (options.mockDpi >> 8) & 0xff;
-      } else if (property === 0xB3 && options.mockColor) { // Color
+      reply[0] = property;
+      reply[1] = 0x00;
+      reply[2] = 0x02;
+      if (property === 0x97) {
+        reply[3] = (options.mockDpi || 0) & 0xff;
+        reply[4] = ((options.mockDpi || 0) >> 8) & 0xff;
+      } else if (property === 0xB3 && options.mockColor) {
         const hex = options.mockColor.replace(/^#/, "");
-        reply[4] = parseInt(hex.substring(0, 2), 16);
-        reply[5] = parseInt(hex.substring(2, 4), 16);
-        reply[6] = parseInt(hex.substring(4, 6), 16);
-      } else if (property === 0x84) { // Polling Rate
-        reply[4] = options.mockPolling ?? 0x00;
-      } else if (property === 0xB6) { // LOD
-        reply[4] = options.mockLod ?? 0x00;
+        reply[3] = parseInt(hex.substring(0, 2), 16);
+        reply[4] = parseInt(hex.substring(2, 4), 16);
+        reply[5] = parseInt(hex.substring(4, 6), 16);
+      } else if (property === 0x84) {
+        reply[3] = options.mockPolling ?? 0x00;
+      } else if (property === 0xB6) {
+        reply[3] = options.mockLod ?? 0x00;
       }
       return new DataView(reply.buffer);
     },
