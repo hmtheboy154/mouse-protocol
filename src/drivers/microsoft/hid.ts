@@ -34,6 +34,10 @@ export class MicrosoftHidClient {
     );
   }
 
+  private getReadOffset(): number {
+    return this.isPro() ? 3 : 4;
+  }
+
   private isPro(): boolean {
     return this.device.productId === 0x082a;
   }
@@ -186,7 +190,7 @@ export class MicrosoftHidClient {
 
   async readDpi(): Promise<number> {
     const view = await this.readProperty(PROPERTY_DPI_READ);
-    const dpi = view.getUint16(3, true); // little-endian
+    const dpi = view.getUint16(this.getReadOffset(), true); // little-endian
     return dpi;
   }
 
@@ -212,9 +216,9 @@ export class MicrosoftHidClient {
   async readColor(): Promise<string> {
     if (!this.isPro()) return "#FFFFFF";
     const view = await this.readProperty(PROPERTY_COLOR_READ);
-    const r = view.getUint8(3);
-    const g = view.getUint8(3);
-    const b = view.getUint8(5);
+    const r = view.getUint8(this.getReadOffset());
+    const g = view.getUint8(this.getReadOffset() + 1);
+    const b = view.getUint8(this.getReadOffset() + 2);
     return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`.toUpperCase();
   }
 
@@ -232,7 +236,7 @@ export class MicrosoftHidClient {
   async readPollingRate(): Promise<number> {
     if (!this.isPro()) return 1000;
     const view = await this.readProperty(PROPERTY_POLLING_READ);
-    const val = view.getUint8(3);
+    const val = view.getUint8(this.getReadOffset());
     if (val === 0x02) return 125;
     if (val === 0x01) return 500;
     return 1000; // 0x00
@@ -249,7 +253,7 @@ export class MicrosoftHidClient {
   async readLiftOffDistance(): Promise<"Low" | "High" | null> {
     if (!this.isPro()) return null;
     const view = await this.readProperty(PROPERTY_DISTANCE_READ);
-    const val = view.getUint8(3);
+    const val = view.getUint8(this.getReadOffset());
     if (val === 0x00) return "Low";
     // val 0x01 = 3, 0x02 = 101, 0x03 = 102, 0x04 = 103 (calibrated). We will map all higher ones to "High".
     return "High";
