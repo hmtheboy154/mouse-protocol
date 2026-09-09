@@ -266,12 +266,13 @@ export class MicrosoftHidClient {
     return 1000; // 0x00
   }
 
-  async setPollingRate(rate: number): Promise<void> {
-    if (!this.isPro()) return;
+  async setPollingRate(rate: number): Promise<number> {
+    if (!this.isPro()) throw new Error("Not supported on this device");
     let val = 0x00;
     if (rate <= 125) val = 0x02;
     else if (rate <= 500) val = 0x01;
     await this.writeProperty(PROPERTY_POLLING_WRITE, [val]);
+    return rate;
   }
 
   async readLiftOffDistance(): Promise<"Low" | "High" | null> {
@@ -283,10 +284,11 @@ export class MicrosoftHidClient {
     return "High";
   }
 
-  async setLiftOffDistance(lod: "Low" | "Medium" | "High"): Promise<void> {
-    if (!this.isPro()) return;
-    if (lod === "Medium") return; // Pro IntelliMouse only supports 2 (0x00) and 3 (0x01) for distance (+ calibrated, but we just use low/high)
+  async setLiftOffDistance(lod: "Low" | "Medium" | "High"): Promise<"Low" | "Medium" | "High"> {
+    if (!this.isPro()) throw new Error("Not supported on this device");
+    if (lod === "Medium") return lod; // Pro IntelliMouse only supports 2 (0x00) and 3 (0x01) for distance (+ calibrated, but we just use low/high)
     const val = lod === "Low" ? 0x00 : 0x01;
-    await this.writeProperty(PROPERTY_DISTANCE_WRITE, [val]); 
+    await this.writeProperty(PROPERTY_DISTANCE_WRITE, [val]);
+    return lod;
   }
 }
