@@ -119,7 +119,7 @@ export class MicrosoftHidClient {
       payload[i + 2] = data[i];
     }
     await this.device.sendFeatureReport(REPORT_ID_WRITE, payload);
-    await new Promise(r => setTimeout(r, 50));
+    await new Promise(r => setTimeout(r, this.isPro() ? 250 : 50));
   }
 
   private async readProperty(property: number): Promise<DataView> {
