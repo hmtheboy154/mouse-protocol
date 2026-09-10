@@ -1,8 +1,11 @@
 export const MICROSOFT_VENDOR_ID = 0x045E;
 
+export const MICROSOFT_PRODUCT_CLASSIC = 0x0823;
+export const MICROSOFT_PRODUCT_PRO = 0x082A;
+
 export const MICROSOFT_PRODUCTS: ReadonlySet<number> = new Set([
-  0x082A, // Pro Intellimouse
-  0x0823, // Classic Intellimouse
+  MICROSOFT_PRODUCT_PRO,
+  MICROSOFT_PRODUCT_CLASSIC,
 ]);
 
 export const REPORT_ID_WRITE = 0x24;

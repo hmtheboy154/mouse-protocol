@@ -1,5 +1,5 @@
 import { ATK_COMPX_PRODUCT_IDS } from "./atk/products.ts";
-import { MICROSOFT_PRODUCTS } from "../microsoft/index.ts";
+import { MICROSOFT_PRODUCT_CLASSIC, MICROSOFT_PRODUCT_PRO, MICROSOFT_VENDOR_ID } from "../microsoft/index.ts";
 import { INCOTT_PRODUCT_IDS, INCOTT_USAGE_PAGE, INCOTT_VENDOR_ID } from "../incott/index.ts";
 import { EGG_WE_HID_FILTERS } from "./endgame/egg-we-control.ts";
 import { GEARHUB_PRODUCTS, GEARHUB_VENDOR_ID } from "@openmouse/protocol/gearhub";
@@ -114,7 +114,7 @@ export const VENDOR_ID = {
   mchose: 0x3837,
   ksnakeUsb: 0xa8a4, // K-snake X11 wired
   ksnakeDongle: 0xa8a5, // K-snake X11 2.4 GHz dongle
-  microsoft: 0x045E,
+  microsoft: MICROSOFT_VENDOR_ID,
   // Shares 0x093a with Glorious's Pixart-based Model O 2 / I 2 family (see
   // `glorious` above); GloriousHidClient.isSupported() only claims its own
   // catalogue product ids, so the two never overlap.
@@ -477,8 +477,8 @@ export const CORSAIR_HID_FILTERS: HIDDeviceFilter[] = CORSAIR_PRODUCT_IDS.map((p
 }));
 
 export const MICROSOFT_HID_FILTERS: HIDDeviceFilter[] = [
-  { vendorId: VENDOR_ID.microsoft, productId: 0x0823, usagePage: 0x0C, usage: 0x01 }, // Classic
-  { vendorId: VENDOR_ID.microsoft, productId: 0x082A, usagePage: 0xFF07, usage: 0x0212 }, // Pro
+  { vendorId: VENDOR_ID.microsoft, productId: MICROSOFT_PRODUCT_CLASSIC, usagePage: 0x0C, usage: 0x01 }, // Classic
+  { vendorId: VENDOR_ID.microsoft, productId: MICROSOFT_PRODUCT_PRO, usagePage: 0xFF07, usage: 0x0212 }, // Pro
 ];
 
 /**

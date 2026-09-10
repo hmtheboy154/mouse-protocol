@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { MicrosoftHidClient } from "./hid.ts";
-import { MICROSOFT_PRODUCTS, REPORT_ID_READ, REPORT_ID_WRITE } from "../../microsoft/index.ts";
+import { MICROSOFT_PRODUCT_PRO, MICROSOFT_PRODUCT_CLASSIC, REPORT_ID_READ, REPORT_ID_WRITE } from "../../microsoft/index.ts";
 import { VENDOR_ID } from "../vendors.ts";
 
 const globals = globalThis as { window?: { setTimeout: typeof setTimeout } };
@@ -80,10 +80,10 @@ function fakeMicrosoft(productId: number, options: { isPro: boolean, mockDpi?: n
 }
 
 test("isSupported accepts only known Microsoft products", () => {
-  const supportedPro = { vendorId: VENDOR_ID.microsoft, productId: 0x082a, collections: [{usagePage: 0xFF07, usage: 0x0212}] } as HIDDevice;
-  const supportedClassic = { vendorId: VENDOR_ID.microsoft, productId: 0x0823, collections: [{usagePage: 0x0C, usage: 0x01}] } as HIDDevice;
+  const supportedPro = { vendorId: VENDOR_ID.microsoft, productId: MICROSOFT_PRODUCT_PRO, collections: [{usagePage: 0xFF07, usage: 0x0212}] } as HIDDevice;
+  const supportedClassic = { vendorId: VENDOR_ID.microsoft, productId: MICROSOFT_PRODUCT_CLASSIC, collections: [{usagePage: 0x0C, usage: 0x01}] } as HIDDevice;
   const unsupported = { vendorId: VENDOR_ID.microsoft, productId: 0x0000, collections: [] } as HIDDevice;
-  const otherVendor = { vendorId: 0x1234, productId: 0x082a, collections: [{usagePage: 0xFF07, usage: 0x0212}] } as HIDDevice;
+  const otherVendor = { vendorId: 0x1234, productId: MICROSOFT_PRODUCT_PRO, collections: [{usagePage: 0xFF07, usage: 0x0212}] } as HIDDevice;
   
   assert.equal(MicrosoftHidClient.isSupported(supportedPro), true);
   assert.equal(MicrosoftHidClient.isSupported(supportedClassic), true);
@@ -92,7 +92,7 @@ test("isSupported accepts only known Microsoft products", () => {
 });
 
 test("Pro Intellimouse reads DPI and Color via receiveFeatureReport", async () => {
-  const { device, sent } = fakeMicrosoft(0x082a, { isPro: true, mockDpi: 3200, mockColor: "#FF0000" });
+  const { device, sent } = fakeMicrosoft(MICROSOFT_PRODUCT_PRO, { isPro: true, mockDpi: 3200, mockColor: "#FF0000" });
   const client = new MicrosoftHidClient(device);
   
   const status = await client.readStatus();
@@ -106,7 +106,7 @@ test("Pro Intellimouse reads DPI and Color via receiveFeatureReport", async () =
 });
 
 test("Classic Intellimouse reads DPI via inputreport event", async () => {
-  const { device, sent } = fakeMicrosoft(0x0823, { isPro: false, mockDpi: 1600 });
+  const { device, sent } = fakeMicrosoft(MICROSOFT_PRODUCT_CLASSIC, { isPro: false, mockDpi: 1600 });
   const client = new MicrosoftHidClient(device);
   
   const status = await client.readStatus();
@@ -117,7 +117,7 @@ test("Classic Intellimouse reads DPI via inputreport event", async () => {
 });
 
 test("Pro Intellimouse setDpi and setLighting send correct padded payloads", async () => {
-  const { device, sent } = fakeMicrosoft(0x082a, { isPro: true, mockDpi: 800 });
+  const { device, sent } = fakeMicrosoft(MICROSOFT_PRODUCT_PRO, { isPro: true, mockDpi: 800 });
   const client = new MicrosoftHidClient(device);
   
   await client.setDpi(1600); // 0x0640
@@ -139,7 +139,7 @@ test("Pro Intellimouse setDpi and setLighting send correct padded payloads", asy
 });
 
 test("Classic Intellimouse setDpi sends correct 32-byte payload", async () => {
-  const { device, sent } = fakeMicrosoft(0x0823, { isPro: false, mockDpi: 400 });
+  const { device, sent } = fakeMicrosoft(MICROSOFT_PRODUCT_CLASSIC, { isPro: false, mockDpi: 400 });
   const client = new MicrosoftHidClient(device);
   
   await client.setDpi(3200); // 0x0C80
@@ -155,7 +155,7 @@ test("Classic Intellimouse setDpi sends correct 32-byte payload", async () => {
 
 test("Pro Intellimouse reads and writes polling rate and LOD", async () => {
   // mockPolling: 0x01 = 500Hz, mockLod: 0x01 = High
-  const { device, sent } = fakeMicrosoft(0x082a, { isPro: true, mockDpi: 800, mockPolling: 0x01, mockLod: 0x01 });
+  const { device, sent } = fakeMicrosoft(MICROSOFT_PRODUCT_PRO, { isPro: true, mockDpi: 800, mockPolling: 0x01, mockLod: 0x01 });
   const client = new MicrosoftHidClient(device);
   
   const status = await client.readStatus();

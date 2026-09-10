@@ -1,7 +1,7 @@
 import type { MouseStatus } from "../mouse-types.ts";
 import { VENDOR_ID } from "../vendors.ts";
 import {
-  MICROSOFT_PRODUCTS,
+  MICROSOFT_PRODUCTS, MICROSOFT_PRODUCT_PRO,
   REPORT_ID_READ,
   REPORT_ID_WRITE,
   PROPERTY_DPI_READ,
@@ -26,7 +26,7 @@ export class MicrosoftHidClient {
     if (device.vendorId !== VENDOR_ID.microsoft || !MICROSOFT_PRODUCTS.has(device.productId)) {
       return false;
     }
-    const isPro = device.productId === 0x082a;
+    const isPro = device.productId === MICROSOFT_PRODUCT_PRO;
     const expectedUsagePage = isPro ? 0xFF07 : 0x000C;
     const expectedUsage = isPro ? 0x0212 : 0x0001;
     return device.collections.some(
@@ -39,7 +39,7 @@ export class MicrosoftHidClient {
   }
 
   private isPro(): boolean {
-    return this.device.productId === 0x082a;
+    return this.device.productId === MICROSOFT_PRODUCT_PRO;
   }
 
   private getWriteLength(): number {
