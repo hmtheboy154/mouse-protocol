@@ -43,7 +43,17 @@
       "@openmouse/protocol/wlmouse": ["./src/wlmouse/index.ts"],
       "@openmouse/protocol/wooting": ["./src/wooting/index.ts"],
       "@openmouse/protocol/zaunkoenig": ["./src/zaunkoenig/index.ts"],
-      "@openmouse/protocol/corsair": ["./src/corsair/index.ts"]
+      "@openmouse/protocol/corsair": ["./src/corsair/index.ts"],
+      "@openmouse/protocol/bitmouse": ["./src/bitmouse/index.ts"],
+      "@openmouse/protocol/gwolves": ["./src/gwolves/index.ts"],
+      "@openmouse/protocol/hyperx": ["./src/hyperx/index.ts"],
+      "@openmouse/protocol/ninjutso": ["./src/ninjutso/index.ts"],
+      "@openmouse/protocol/glorious": ["./src/glorious/index.ts"],
+      "@openmouse/protocol/glorious-classic": ["./src/glorious-classic/index.ts"],
+      "@openmouse/protocol/fantech": ["./src/fantech/index.ts"],
+      "@openmouse/protocol/microsoft": ["./src/microsoft/index.ts"],
+      "@openmouse/protocol/valkyrie": ["./src/valkyrie/index.ts"],
+      "@openmouse/protocol/ksnake": ["./src/ksnake/index.ts"]
     }
   },
   "include": ["src/**/*"],
